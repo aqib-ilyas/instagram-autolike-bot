@@ -11,9 +11,10 @@ from selenium.webdriver.support.wait import WebDriverWait
 import time
 
 # setting up web driver
-chrome = webdriver.Chrome('C:/Users\Aqib Ilyas/Downloads/chromedriver_win32/chromedriver.exe')  # Path to chrome driver
-
-chrome.get('https://www.instagram.com/')
+def setting_up_webdriver():
+    global chrome
+    chrome = webdriver.Chrome('C:/Users\Aqib Ilyas/Downloads/chromedriver_win32/chromedriver.exe')  # Path to chrome driver
+    chrome.get('https://www.instagram.com/')
 
 
 def login():
@@ -25,6 +26,7 @@ def login():
     password = input()
     print("Enter username of profile or #tag you want to open")
     name = input()
+    setting_up_webdriver()
     username_path = WebDriverWait(chrome, 20).until(
         EC.element_to_be_clickable((By.CSS_SELECTOR, "input[name='username']")))
     password_path = WebDriverWait(chrome, 20).until(
@@ -101,7 +103,7 @@ def like_all_posts():
 
     # Closing the post popup when all posts have been liked
     try:
-        chrome.find_element_by_xpath("//button[@class=\"ckWGn\"]").click()
+         chrome.find_element_by_xpath("/html/body/div[4]/div[3]/button").click()
         print("All posts have been liked")
     except:
         print("Couldn't close the post")
@@ -127,8 +129,58 @@ def next_post():
         print("User has no more posts")
         return False
 
+def open_story():
+    time.sleep(2)
+    WebDriverWait(chrome, 10).until(EC.element_to_be_clickable((By.XPATH, '//div[@class="XjzKX"]'))).click()    
+    
 
+def get_account_info():
+    time.sleep(2)
+    Verification = chrome.find_element_by_xpath("//div[@class='nZSzR']").text
+    Verification = Verification.split('\n')
+    Verified = Verification[1]
+    if Verified == 'Verified':
+        print('Its a Verified Account')
+    else:
+        print('Its a Non-Verified Account')
+    Connection = urlopen(chrome.current_url)
+    HTML = Connection.read()
+    Connection.close()
+    HTML = soup(HTML, 'html.parser')
+    Info = HTML.find_all('meta', attrs={'property': 'og:description'})
+    Info = Info[0].get('content').split(' ')
+    INFO = []
+    for i in range(0, 5, 2):
+        INFO.append(Info[i])
+    print('No. of Followers : ', INFO[0], '\nNo. of Followings :', INFO[1], '\nNo of Posts : ', INFO[2])    
+    
+def scroll_up():
+    chrome.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.HOME)
+    
+    
+def get_followers(user):
+    time.sleep(3)
+    try:
+        chrome.find_element_by_xpath("//a[@href='/"+ str(user) +"/followers/']").click()
+        chrome.find_element_by_xpath("//div[@role='dialog']")
+        scroll_down()
+        scroll_up()
+        return True
+    except NoSuchElementException:
+        print("No followers found")
+        return False
+
+    
+    
+    
+    
+    
+    
 # Calling functions
 login()
 scroll_down()
+scroll_up()
+get_account_info()
+get_followers()
+open_story()
 like_all_posts()
